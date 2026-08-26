@@ -11,6 +11,7 @@ import IndustriesSection from './home/IndustriesSection'
 import IntegrationsSection from './home/IntegrationsSection'
 import ExecutiveSection from './home/ExecutiveSection'
 import WhySection from './home/WhySection'
+import { EcosystemSection } from '@/components/sections/home/EcosystemSection'
 import CTASection from '@/components/CTASection'
 
 export default function Home() {
@@ -29,6 +30,7 @@ export default function Home() {
       <IntegrationsSection />
       <ExecutiveSection />
       <WhySection />
+      <EcosystemSection />
       <CTASection
         title="Your Financial Data Deserves a Better System."
         description="Bring structure, visibility, and intelligence to your financial operations with MetaLedger."

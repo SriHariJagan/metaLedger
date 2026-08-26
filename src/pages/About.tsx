@@ -1,6 +1,7 @@
 import { AlertCircle, Target, Eye, Gem, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react'
 import CTASection from '@/components/CTASection'
 import AnimatedSection from '@/components/AnimatedSection'
+import { FoundersSection } from '@/components/sections/about/FoundersSection'
 import { Link } from 'react-router-dom'
 
 const problems = [
@@ -249,6 +250,8 @@ export default function About() {
           </AnimatedSection>
         </div>
       </section>
+
+      <FoundersSection />
 
       <CTASection
         title="Let's Build Better Financial Operations"
