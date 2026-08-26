@@ -1,242 +1,614 @@
-import { useState, type FormEvent } from 'react'
-import { Send, Mail, MessageSquare, Users, HelpCircle, ChevronDown, CheckCircle, Building2, ArrowRight } from 'lucide-react'
-import SectionHeading from '@/components/SectionHeading'
-import AnimatedSection from '@/components/AnimatedSection'
+import { useState, useCallback } from "react";
+import { Reveal, SectionHeading } from "@/components/common";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { contactService } from "@/services/contactService";
+import {
+  Mail,
+  MapPin,
+  Phone,
+  Loader2,
+  CheckCircle2,
+  Send,
+  LifeBuoy,
+  Handshake,
+  UserPlus,
+  Clock,
+  Zap,
+  Building2,
+} from "lucide-react";
 
-const contactOptions = [
-  { icon: Mail, title: 'Sales', desc: 'Discuss how MetaLedger can support your financial operations.', gradient: 'from-brand-blue to-brand-bright' },
-  { icon: MessageSquare, title: 'Product', desc: 'Share feedback, feature requests, or product questions.', gradient: 'from-brand-cyan to-[#09a8a8]' },
-  { icon: Users, title: 'Partnerships', desc: 'Explore partnership and integration opportunities.', gradient: 'from-brand-teal to-[#09a880]' },
-  { icon: HelpCircle, title: 'General Enquiries', desc: 'Any other questions or information requests.', gradient: 'from-brand-navy to-brand-blue' },
-]
+const CONTACT_REASONS = [
+  { value: "demo", label: "Request a live demo" },
+  { value: "pricing", label: "Pricing & plans" },
+  { value: "enterprise", label: "Enterprise / custom deployment" },
+  { value: "partnership", label: "Partnership inquiry" },
+  { value: "press", label: "Press & media" },
+  { value: "other", label: "Other" },
+];
 
-const faqs = [
-  { q: 'What is MetaLedger?', a: 'MetaLedger is a digital financial operations platform that helps organizations manage financial records, transactions, reconciliation, reporting, and financial visibility through a connected digital experience.' },
-  { q: 'Who is MetaLedger designed for?', a: 'MetaLedger is designed for organizations of all sizes — from startups to enterprises — that need better visibility, control, and efficiency in their financial operations.' },
-  { q: 'What financial operations can MetaLedger support?', a: 'MetaLedger supports ledger management, transaction tracking, reconciliation, expense management, approvals, reporting, and analytics as part of a connected financial workflow.' },
-  { q: 'Can MetaLedger integrate with existing systems?', a: 'MetaLedger is designed to connect with common business systems including accounting platforms, banking systems, ERP, CRM, payroll, and payment platforms.' },
-  { q: 'Does MetaLedger support multiple users?', a: 'Yes. MetaLedger supports role-based access, approval hierarchies, and multi-user workflows designed for team-based financial operations.' },
-  { q: 'How does MetaLedger approach security?', a: 'MetaLedger is built with role-based access controls, activity tracking, approval workflows, and structured data handling practices designed around responsible financial data management.' },
-]
+const COMPANY_SIZES = [
+  { value: "1-10", label: "1-10 employees" },
+  { value: "11-50", label: "11-50 employees" },
+  { value: "51-200", label: "51-200 employees" },
+  { value: "201-500", label: "201-500 employees" },
+  { value: "501-1000", label: "501-1000 employees" },
+  { value: "1000+", label: "1000+ employees" },
+];
 
-const companySizes = ['1-10', '11-50', '51-200', '201-500', '500+']
-const solutions = ['Ledger Management', 'Transaction Management', 'Reconciliation', 'Expense Management', 'Reporting', 'Analytics', 'Full Platform']
+const TRANSACTION_VOLUMES = [
+  { value: "under-1k", label: "Under 1k transactions/month" },
+  { value: "1k-10k", label: "1k-10k transactions/month" },
+  { value: "10k-50k", label: "10k-50k transactions/month" },
+  { value: "50k-250k", label: "50k-250k transactions/month" },
+  { value: "250k+", label: "250k+ transactions/month" },
+  { value: "not-sure", label: "Not sure yet" },
+];
 
-export default function Contact() {
-  const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
+const channels = [
+  {
+    icon: LifeBuoy,
+    title: "Support",
+    desc: "Account & reconciliation help",
+    color: "#0756F2",
+    value: "support@metaledger.metadev.io",
+  },
+  {
+    icon: Handshake,
+    title: "Partnerships",
+    desc: "Integrations & collaborations",
+    color: "#0BBFBF",
+    value: "partners@metaledger.metadev.io",
+  },
+  {
+    icon: UserPlus,
+    title: "Careers",
+    desc: "Questions about open roles",
+    color: "#0BBF9E",
+    value: "careers@metaledger.metadev.io",
+  },
+  {
+    icon: Phone,
+    title: "General",
+    desc: "Main contact line",
+    color: "#F97316",
+    value: "+91 95595 59143",
+  },
+];
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    setFormState('loading')
-    setTimeout(() => setFormState('success'), 1500)
-  }
+const METADEV_CONTACT_EMAILS = [
+  "info@metadev.in",
+  "contact@metadev.in",
+  "support@metadev.in",
+  "business@metadev.in",
+  "tech@metadev.in",
+  "partnership@metadev.in",
+];
+
+const METADEV_OFFICES = [
+  "Hyderabad, Telangana (HQ)",
+  "Amaravathi, Andhra Pradesh",
+  "Bangalore, Karnataka",
+  "Bengaluru, Karnataka (HQ)",
+];
+
+const METADEV_PHONES = ["+91 95595 59143"];
+
+const METADEV_HOURS = [
+  "Monday – Friday: 9AM – 6PM",
+  "Saturday: 10AM – 4PM",
+  "Sunday: Closed",
+];
+
+interface FormData {
+  name: string;
+  email: string;
+  company: string;
+  reason: string;
+  companySize: string;
+  adSpend: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  company?: string;
+  reason?: string;
+}
+
+function ContactHero() {
+  return (
+    <section
+      className="relative overflow-hidden bg-white pt-28 sm:pt-32 lg:pt-40 pb-16 sm:pb-20 lg:pb-24"
+      aria-labelledby="contact-hero-heading"
+    >
+      <div className="absolute inset-0" aria-hidden="true">
+        <div className="absolute top-20 right-[15%] h-[500px] w-[500px] rounded-full bg-brand-blue/5 blur-[120px]" />
+        <div className="absolute bottom-10 left-[10%] h-[400px] w-[400px] rounded-full bg-brand-cyan/5 blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-teal/3 blur-[80px]" />
+      </div>
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(7,86,242,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(7,86,242,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+      <div className="absolute inset-0">
+        <div className="absolute top-[20%] right-[8%] h-px w-[180px] bg-gradient-to-r from-transparent via-brand-blue/15 to-transparent" />
+        <div className="absolute top-[60%] left-[5%] h-px w-[140px] bg-gradient-to-r from-transparent via-brand-cyan/15 to-transparent" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+        <Reveal variant="up">
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand-blue/15 bg-brand-blue/5 px-5 py-2 mb-8">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-blue opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-blue" />
+            </span>
+            <span className="text-xs font-semibold tracking-wide text-brand-blue uppercase">
+              Get in touch
+            </span>
+          </span>
+        </Reveal>
+        <Reveal variant="up" delay={100}>
+          <h1
+            id="contact-hero-heading"
+            className="text-4xl sm:text-5xl lg:text-[4.2rem] font-bold tracking-tight text-brand-navy leading-[0.98]"
+          >
+            Let's talk about{" "}
+            <span className="relative inline-block">
+              <span className="bg-gradient-to-r from-brand-blue via-brand-bright to-brand-cyan bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient-shift">
+                cleaner books
+              </span>
+              <svg
+                className="absolute -bottom-2 left-0 h-3 w-full"
+                viewBox="0 0 200 8"
+                fill="none"
+              >
+                <path
+                  d="M1 5.5C40 2 80 1 100 3C120 5 160 6 199 3"
+                  stroke="url(#hero-underline)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient
+                    id="hero-underline"
+                    x1="0"
+                    y1="0"
+                    x2="200"
+                    y2="0"
+                  >
+                    <stop stopColor="#0756F2" />
+                    <stop offset="1" stopColor="#0BBFBF" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
+          </h1>
+        </Reveal>
+        <Reveal variant="up" delay={200}>
+          <p className="mt-7 text-lg sm:text-xl text-muted max-w-3xl mx-auto leading-relaxed">
+            Whether you're evaluating MetaLedger, need enterprise onboarding, or
+            just have questions — our financial operations specialists are here
+            to help.
+          </p>
+        </Reveal>
+        <Reveal variant="up" delay={300}>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            {[
+              { label: "Response Time", value: "< 4 hours", icon: Zap },
+              { label: "Accuracy Rate", value: "99.9%", icon: CheckCircle2 },
+              { label: "Enterprise Clients", value: "50+", icon: Building2 },
+            ].map((stat, i) => (
+              <div
+                key={stat.label}
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-soft"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-blue/8">
+                  <stat.icon className="h-4 w-4 text-brand-blue" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[11px] text-muted">{stat.label}</p>
+                  <p className="text-sm font-bold text-brand-navy">
+                    {stat.value}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function ChannelsSection() {
+  return (
+    <section
+      className="relative py-8 sm:py-10 lg:py-12 bg-white"
+      aria-labelledby="channels-heading"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Reveal variant="up">
+          <div className="relative -mt-10 sm:-mt-12 z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {channels.map((ch, i) => {
+                const Icon = ch.icon;
+                return (
+                  <Reveal key={ch.title} variant="scale" delay={i * 80}>
+                    <div className="group glass-card rounded-2xl p-5 transition-all duration-300 hover:shadow-glow hover:-translate-y-1 hover:border-brand-blue/20 cursor-default">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:shadow-glow"
+                          style={{ backgroundColor: `${ch.color}12` }}
+                        >
+                          <Icon
+                            className="h-6 w-6 transition-colors duration-300"
+                            style={{ color: ch.color }}
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-brand-navy text-sm">
+                            {ch.title}
+                          </h3>
+                          <p className="text-xs text-muted mt-0.5">
+                            {ch.desc}
+                          </p>
+                          <p
+                            className="text-xs font-medium mt-1.5 truncate transition-colors duration-300"
+                            style={{ color: ch.color }}
+                          >
+                            {ch.value}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function ContactFormSection() {
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    email: "",
+    company: "",
+    reason: "demo",
+    companySize: "",
+    adSpend: "not-sure",
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+
+  const validateForm = useCallback((): boolean => {
+    const newErrors: FormErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Full name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      newErrors.email = "Invalid email format";
+    if (!formData.company.trim())
+      newErrors.company = "Company name is required";
+    if (!formData.reason) newErrors.reason = "Please select a reason";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsSubmitting(true);
+    try {
+      await contactService.submit({
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        reason: formData.reason,
+        companySize: formData.companySize,
+        adSpend: formData.adSpend,
+        subject: formData.reason,
+        message: "",
+      });
+      setSubmitStatus("success");
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        reason: "demo",
+        companySize: "",
+        adSpend: "not-sure",
+      });
+    } catch {
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (name: keyof FormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
 
   return (
-    <main>
-      <section className="relative min-h-[70vh] overflow-hidden pt-28 pb-24" style={{ background: 'linear-gradient(160deg, #040a1a 0%, #0A2D73 35%, #0756F2 65%, #0a2050 100%)' }}>
-        <div className="absolute inset-0">
-          <div className="absolute top-20 right-20 h-[500px] w-[500px] rounded-full bg-brand-blue/15 blur-[120px]" />
-          <div className="absolute bottom-20 left-20 h-[400px] w-[400px] rounded-full bg-brand-cyan/10 blur-[100px]" />
-        </div>
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px'
-          }} />
-        </div>
-        <div className="container-wide mx-auto relative text-center">
-          <AnimatedSection>
-            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/10 px-5 py-2 text-xs font-semibold uppercase tracking-widest text-brand-cyan backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan animate-pulse" />
-              Get In Touch
-            </span>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl">
-              Let's Talk About Better<br />
-              <span className="gradient-text">Financial Operations</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/50 sm:text-lg">
-              Whether you're exploring MetaLedger, discussing a partnership, or looking for more information, we'd love to hear from you.
-            </p>
-          </AnimatedSection>
-        </div>
-      </section>
+    <section
+      className="py-12 sm:py-16 lg:py-20 bg-off overflow-hidden"
+      aria-labelledby="contact-form-heading"
+    >
+      <div className="absolute inset-0" aria-hidden="true">
+        <div className="absolute top-0 right-0 h-[400px] w-[400px] rounded-full bg-brand-blue/3 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-brand-cyan/3 blur-[80px]" />
+      </div>
 
-      <section className="section-padding">
-        <div className="container-wide mx-auto">
-          <SectionHeading title="How Can We Help?" description="Choose the department that best fits your inquiry." />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {contactOptions.map((opt, i) => (
-              <AnimatedSection key={opt.title} delay={i * 0.1}>
-                <div className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-7 text-center transition-all duration-500 hover:shadow-card-hover hover:-translate-y-1 hover:border-transparent">
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  <div className="relative">
-                    <div className={`mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${opt.gradient} text-white shadow-lg transition-all duration-500 group-hover:shadow-glow group-hover:scale-110`}>
-                      <opt.icon size={24} />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16">
+          <div>
+            <Reveal variant="up">
+              <SectionHeading
+                eyebrow="Contact us"
+                title="Start the conversation"
+                description="Fill out the form and we'll route you to the right person. Most inquiries get a response within 4 business hours."
+                align="left"
+              />
+            </Reveal>
+
+            <Reveal variant="up" delay={100}>
+              <div className="mt-10 space-y-4">
+                {[
+                  {
+                    icon: Mail,
+                    color: "#0756F2",
+                    title: "Email",
+                    lines: METADEV_CONTACT_EMAILS,
+                  },
+                  {
+                    icon: MapPin,
+                    color: "#0BBFBF",
+                    title: "Offices",
+                    lines: METADEV_OFFICES,
+                  },
+                  {
+                    icon: Phone,
+                    color: "#8B5CF6",
+                    title: "Phone",
+                    lines: METADEV_PHONES,
+                  },
+                  {
+                    icon: Clock,
+                    color: "#F97316",
+                    title: "Working Hours",
+                    lines: METADEV_HOURS,
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.title}
+                      className="group flex items-start gap-4 rounded-xl border border-slate-100 bg-white p-4 transition-all duration-300 hover:shadow-card hover:border-slate-200 hover:-translate-y-0.5"
+                    >
+                      <div
+                        className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110"
+                        style={{ backgroundColor: `${item.color}10` }}
+                      >
+                        <Icon
+                          className="h-5 w-5"
+                          style={{ color: item.color }}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-brand-navy text-sm">
+                          {item.title}
+                        </h4>
+                        {item.lines.map((line) => (
+                          <p
+                            key={line}
+                            className="text-sm text-muted mt-0.5"
+                          >
+                            {line}
+                          </p>
+                        ))}
+                      </div>
                     </div>
-                    <h3 className="mb-2 text-base font-bold text-dark">{opt.title}</h3>
-                    <p className="text-xs leading-relaxed text-muted">{opt.desc}</p>
-                  </div>
-                </div>
-              </AnimatedSection>
-            ))}
+                  );
+                })}
+              </div>
+            </Reveal>
           </div>
-        </div>
-      </section>
 
-      <section className="section-padding bg-off">
-        <div className="container-wide mx-auto">
-          <SectionHeading title="Send Us a Message" description="Fill out the form below and we'll get back to you as soon as possible." />
-          <AnimatedSection>
-            <div className="mx-auto max-w-2xl">
-              {formState === 'success' ? (
-                <div className="relative overflow-hidden rounded-2xl border border-brand-teal/20 bg-lteal p-10 text-center">
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/10 to-brand-cyan/5" />
-                  <div className="relative">
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-brand-teal to-[#09a880] text-white shadow-glow-teal">
-                      <CheckCircle size={40} />
-                    </div>
-                    <h3 className="text-xl font-bold text-dark">Message Sent Successfully</h3>
-                    <p className="mt-2 text-sm text-muted">Thank you for reaching out. We'll get back to you within 24 hours.</p>
-                    <button onClick={() => setFormState('idle')} className="mt-6 text-sm font-semibold text-brand-blue hover:underline">
-                      Send another message
-                    </button>
+          <div>
+            <Reveal variant="up" delay={150}>
+              {submitStatus === "success" ? (
+                <div className="glass-card !rounded-2xl p-8 sm:p-12 text-center" role="status">
+                  <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-brand-blue/10 mb-6 shadow-glow">
+                    <CheckCircle2 className="h-10 w-10 text-brand-blue" />
                   </div>
+                  <h2 className="text-2xl font-bold text-brand-navy">
+                    Message sent!
+                  </h2>
+                  <p className="mt-3 text-muted max-w-md mx-auto">
+                    Thanks for reaching out. Our team will review and get back
+                    to you within our committed response time.
+                  </p>
+                  <Button
+                    variant="brand"
+                    className="mt-8"
+                    onClick={() => setSubmitStatus("idle")}
+                  >
+                    Send another message
+                  </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="name" className="mb-1.5 block text-xs font-semibold text-dark">Full Name *</label>
-                      <input type="text" id="name" required className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow" placeholder="John Doe" />
+                <form
+                  onSubmit={handleSubmit}
+                  noValidate
+                  className="glass-card !rounded-2xl p-6 sm:p-8 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-teal" />
+                  <div className="absolute top-0 right-0 h-[200px] w-[200px] opacity-[0.03] rounded-full bg-brand-blue blur-[60px]" />
+
+                  <div className="relative">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+                      <Input
+                        label="Full name"
+                        name="name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleChange("name", e.target.value)
+                        }
+                        error={errors.name}
+                        required
+                        placeholder="Priya Sharma"
+                        autoComplete="name"
+                      />
+                      <Input
+                        label="Work email"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          handleChange("email", e.target.value)
+                        }
+                        error={errors.email}
+                        required
+                        placeholder="priya@company.com"
+                        autoComplete="email"
+                      />
                     </div>
-                    <div>
-                      <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-dark">Work Email *</label>
-                      <input type="email" id="email" required className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow" placeholder="john@company.com" />
+                    <Input
+                      label="Company"
+                      name="company"
+                      value={formData.company}
+                      onChange={(e) =>
+                        handleChange("company", e.target.value)
+                      }
+                      error={errors.company}
+                      required
+                      placeholder="Lumenkart"
+                      autoComplete="organization"
+                      className="mb-4"
+                    />
+                    <Select
+                      label="How can we help?"
+                      name="reason"
+                      value={formData.reason}
+                      onChange={(e) =>
+                        handleChange("reason", e.target.value)
+                      }
+                      options={CONTACT_REASONS}
+                      error={errors.reason}
+                      required
+                      className="mb-4"
+                    />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-6">
+                      <Select
+                        label="Company size"
+                        name="companySize"
+                        value={formData.companySize}
+                        onChange={(e) =>
+                          handleChange("companySize", e.target.value)
+                        }
+                        options={COMPANY_SIZES}
+                        placeholderOption="Select company size"
+                      />
+                      <Select
+                        label="Monthly transaction volume"
+                        name="adSpend"
+                        value={formData.adSpend}
+                        onChange={(e) =>
+                          handleChange("adSpend", e.target.value)
+                        }
+                        options={TRANSACTION_VOLUMES}
+                        placeholderOption="Select transaction volume"
+                      />
                     </div>
-                  </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="phone" className="mb-1.5 block text-xs font-semibold text-dark">Phone</label>
-                      <input type="tel" id="phone" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow" placeholder="+91 98765 43210" />
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        type="submit"
+                        className="w-full sm:w-auto !py-3.5"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2
+                              className="h-4 w-4 animate-spin mr-2"
+                              aria-hidden="true"
+                            />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            Send message
+                            <Send
+                              className="h-4 w-4 ml-2"
+                              aria-hidden="true"
+                            />
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full sm:w-auto !py-3.5"
+                        onClick={() => {
+                          setFormData({
+                            name: "",
+                            email: "",
+                            company: "",
+                            reason: "demo",
+                            companySize: "",
+                            adSpend: "not-sure",
+                          });
+                          setErrors({});
+                        }}
+                      >
+                        Clear form
+                      </Button>
                     </div>
-                    <div>
-                      <label htmlFor="company" className="mb-1.5 block text-xs font-semibold text-dark">Company</label>
-                      <input type="text" id="company" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow" placeholder="Acme Corp" />
-                    </div>
-                  </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="size" className="mb-1.5 block text-xs font-semibold text-dark">Company Size</label>
-                      <select id="size" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow">
-                        <option value="">Select size</option>
-                        {companySizes.map((s) => <option key={s} value={s}>{s} employees</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="solution" className="mb-1.5 block text-xs font-semibold text-dark">Interested Solution</label>
-                      <select id="solution" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow">
-                        <option value="">Select solution</option>
-                        {solutions.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="message" className="mb-1.5 block text-xs font-semibold text-dark">Message *</label>
-                    <textarea id="message" required rows={4} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-dark transition-all focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:shadow-glow" placeholder="Tell us about your requirements..." />
-                  </div>
-                  <button type="submit" disabled={formState === 'loading'} className="btn-primary w-full !py-4 disabled:opacity-60">
-                    {formState === 'loading' ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                        Sending...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">Send Message <Send size={14} /></span>
+                    {submitStatus === "error" && (
+                      <p
+                        className="mt-4 text-center text-sm text-red-500"
+                        role="alert"
+                      >
+                        Something went wrong. Please try again or email
+                        hello@metaledger.metadev.io directly.
+                      </p>
                     )}
-                  </button>
-                  {formState === 'error' && <p className="text-xs text-red-500">Something went wrong. Please try again.</p>}
+                  </div>
                 </form>
               )}
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      <section className="section-padding">
-        <div className="container-wide mx-auto">
-          <SectionHeading title="Why Contact Us?" description="We're here to help you explore how MetaLedger can support your financial operations." />
-          <div className="grid gap-6 sm:grid-cols-3">
-            {[
-              { title: 'Explore MetaLedger', desc: 'Learn about the platform, features, and how it works for your industry.', icon: Building2, gradient: 'from-brand-blue to-brand-bright' },
-              { title: 'Discuss Your Requirements', desc: 'Share your specific financial operation challenges and goals.', icon: MessageSquare, gradient: 'from-brand-cyan to-[#09a8a8]' },
-              { title: 'Explore Partnerships', desc: 'Discuss integration, reseller, or strategic partnership opportunities.', icon: Users, gradient: 'from-brand-teal to-[#09a880]' },
-            ].map((item, i) => (
-              <AnimatedSection key={item.title} delay={i * 0.1}>
-                <div className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-7 transition-all duration-500 hover:shadow-card-hover hover:-translate-y-1 hover:border-transparent">
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  <div className="relative">
-                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} text-white shadow-lg transition-all duration-500 group-hover:shadow-glow group-hover:scale-110`}>
-                      <item.icon size={20} />
-                    </div>
-                    <h4 className="mb-1 text-sm font-bold text-dark">{item.title}</h4>
-                    <p className="text-xs leading-relaxed text-muted">{item.desc}</p>
-                  </div>
-                </div>
-              </AnimatedSection>
-            ))}
+            </Reveal>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <section className="section-padding bg-off">
-        <div className="container-wide mx-auto">
-          <SectionHeading title="Frequently Asked Questions" description="Find answers to common questions about MetaLedger." />
-          <AnimatedSection>
-            <div className="mx-auto max-w-3xl space-y-3">
-              {faqs.map((faq, i) => (
-                <div key={i} className="overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:shadow-card">
-                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="flex w-full items-center justify-between p-6 text-left">
-                    <span className="text-sm font-semibold text-dark">{faq.q}</span>
-                    <ChevronDown size={16} className={`shrink-0 text-muted transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
-                  </button>
-                  <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="border-t border-gray-100 px-6 pb-6 pt-4">
-                      <p className="text-sm leading-relaxed text-muted">{faq.a}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden py-24" style={{ background: 'linear-gradient(160deg, #040a1a 0%, #0A2D73 35%, #0756F2 65%, #0a2050 100%)' }}>
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-blue/15 blur-[120px]" />
-        </div>
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px'
-          }} />
-        </div>
-        <div className="container-wide mx-auto relative text-center">
-          <AnimatedSection>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Let's Build Better Financial<br />
-              <span className="gradient-text">Systems Together</span>
-            </h2>
-            <div className="mt-10">
-              <a href="#top" onClick={() => window.scrollTo({ top: 0 })} className="btn-primary !bg-white !text-brand-navy hover:!bg-white/90 !px-10 !py-4 !text-base group">
-                <span>Get Started</span>
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-              </a>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-    </main>
-  )
+export default function Contact() {
+  return (
+    <>
+      <ContactHero />
+      <ChannelsSection />
+      <ContactFormSection />
+    </>
+  );
 }
