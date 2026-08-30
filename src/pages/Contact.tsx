@@ -52,21 +52,21 @@ const channels = [
     title: "Support",
     desc: "Account & reconciliation help",
     color: "#0756F2",
-    value: "support@metaledger.metadev.io",
+    value: "support@metadev.in",
   },
   {
     icon: Handshake,
     title: "Partnerships",
     desc: "Integrations & collaborations",
     color: "#0BBFBF",
-    value: "partners@metaledger.metadev.io",
+    value: "partners@metadev.in",
   },
   {
     icon: UserPlus,
     title: "Careers",
     desc: "Questions about open roles",
     color: "#0BBF9E",
-    value: "careers@metaledger.metadev.io",
+    value: "careers@metadev.in",
   },
   {
     icon: Phone,
@@ -81,8 +81,6 @@ const METADEV_CONTACT_EMAILS = [
   "info@metadev.in",
   "contact@metadev.in",
   "support@metadev.in",
-  "business@metadev.in",
-  "tech@metadev.in",
   "partnership@metadev.in",
 ];
 
@@ -258,9 +256,7 @@ function ChannelsSection() {
                           <h3 className="font-semibold text-brand-navy text-sm">
                             {ch.title}
                           </h3>
-                          <p className="text-xs text-muted mt-0.5">
-                            {ch.desc}
-                          </p>
+                          <p className="text-xs text-muted mt-0.5">{ch.desc}</p>
                           <p
                             className="text-xs font-medium mt-1.5 truncate transition-colors duration-300"
                             style={{ color: ch.color }}
@@ -418,10 +414,7 @@ function ContactFormSection() {
                           {item.title}
                         </h4>
                         {item.lines.map((line) => (
-                          <p
-                            key={line}
-                            className="text-sm text-muted mt-0.5"
-                          >
+                          <p key={line} className="text-sm text-muted mt-0.5">
                             {line}
                           </p>
                         ))}
@@ -436,7 +429,10 @@ function ContactFormSection() {
           <div>
             <Reveal variant="up" delay={150}>
               {submitStatus === "success" ? (
-                <div className="glass-card !rounded-2xl p-8 sm:p-12 text-center" role="status">
+                <div
+                  className="glass-card !rounded-2xl p-8 sm:p-12 text-center"
+                  role="status"
+                >
                   <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-brand-blue/10 mb-6 shadow-glow">
                     <CheckCircle2 className="h-10 w-10 text-brand-blue" />
                   </div>
@@ -470,9 +466,7 @@ function ContactFormSection() {
                         label="Full name"
                         name="name"
                         value={formData.name}
-                        onChange={(e) =>
-                          handleChange("name", e.target.value)
-                        }
+                        onChange={(e) => handleChange("name", e.target.value)}
                         error={errors.name}
                         required
                         placeholder="Priya Sharma"
@@ -483,9 +477,7 @@ function ContactFormSection() {
                         type="email"
                         name="email"
                         value={formData.email}
-                        onChange={(e) =>
-                          handleChange("email", e.target.value)
-                        }
+                        onChange={(e) => handleChange("email", e.target.value)}
                         error={errors.email}
                         required
                         placeholder="priya@company.com"
@@ -496,9 +488,7 @@ function ContactFormSection() {
                       label="Company"
                       name="company"
                       value={formData.company}
-                      onChange={(e) =>
-                        handleChange("company", e.target.value)
-                      }
+                      onChange={(e) => handleChange("company", e.target.value)}
                       error={errors.company}
                       required
                       placeholder="Lumenkart"
@@ -509,9 +499,7 @@ function ContactFormSection() {
                       label="How can we help?"
                       name="reason"
                       value={formData.reason}
-                      onChange={(e) =>
-                        handleChange("reason", e.target.value)
-                      }
+                      onChange={(e) => handleChange("reason", e.target.value)}
                       options={CONTACT_REASONS}
                       error={errors.reason}
                       required
@@ -557,10 +545,7 @@ function ContactFormSection() {
                         ) : (
                           <>
                             Send message
-                            <Send
-                              className="h-4 w-4 ml-2"
-                              aria-hidden="true"
-                            />
+                            <Send className="h-4 w-4 ml-2" aria-hidden="true" />
                           </>
                         )}
                       </Button>
