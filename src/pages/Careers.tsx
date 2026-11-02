@@ -1,3 +1,4 @@
+import { SEO } from '@/seo/SEO';
 import { ArrowRight, Target, Award, GraduationCap, Lightbulb, Zap, Users, Code, Cpu, MessageSquare, Sparkles, Handshake, Eye } from 'lucide-react'
 import SectionHeading from '@/components/SectionHeading'
 import CTASection from '@/components/CTASection'
@@ -39,6 +40,7 @@ const culture = [
 export default function Careers() {
   return (
     <main>
+      <SEO />
       <section className="relative min-h-[70vh] overflow-hidden pt-28 pb-24" style={{ background: 'linear-gradient(160deg, #040a1a 0%, #0A2D73 35%, #0756F2 65%, #0a2050 100%)' }}>
         <div className="absolute inset-0">
           <div className="absolute top-20 right-20 h-[500px] w-[500px] rounded-full bg-brand-blue/15 blur-[120px]" />

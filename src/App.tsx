@@ -1,3 +1,5 @@
+import { usePageTracking } from './seo/usePageTracking';
+import { SEO } from './seo/SEO';
 import { Routes, Route } from 'react-router-dom'
 import Navbar from '@/components/Navbar'
 import { Footer } from '@/components/footer/Footer'
@@ -14,8 +16,10 @@ import { Compliance } from '@/pages/legal/Compliance'
 import { Sitemap } from '@/pages/legal/Sitemap'
 
 export default function App() {
+  usePageTracking();
   return (
     <div className="flex min-h-screen flex-col">
+      <SEO />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

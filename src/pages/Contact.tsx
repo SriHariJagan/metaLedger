@@ -1,3 +1,4 @@
+import { SEO } from '@/seo/SEO';
 import { useState, useCallback } from "react";
 import { Reveal, SectionHeading } from "@/components/common";
 import { Button } from "@/components/ui/Button";
@@ -81,7 +82,7 @@ const METADEV_CONTACT_EMAILS = [
   "info@metadev.in",
   "contact@metadev.in",
   "support@metadev.in",
-  "partnership@metadev.in",
+  "partnership@metaledger.in",
 ];
 
 const METADEV_OFFICES = [
@@ -591,6 +592,7 @@ function ContactFormSection() {
 export default function Contact() {
   return (
     <>
+      <SEO />
       <ContactHero />
       <ChannelsSection />
       <ContactFormSection />

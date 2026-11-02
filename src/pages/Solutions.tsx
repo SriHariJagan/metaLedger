@@ -1,3 +1,4 @@
+import { SEO } from '@/seo/SEO';
 import { Link } from 'react-router-dom'
 import { ArrowRight, BarChart3, CheckCircle, Shield, Eye, Zap, Users, Building2, Database, Landmark, Wallet, CreditCard, PieChart, Sliders, GraduationCap, ShoppingCart, HeartPulse, Factory, Briefcase, Globe, Rocket, AlertCircle, Lock, Activity, TrendingUp } from 'lucide-react'
 import AnimatedSection from '@/components/AnimatedSection'
@@ -21,6 +22,7 @@ const industries = [
 export default function Solutions() {
   return (
     <main>
+      <SEO />
       <section className="relative min-h-[80vh] overflow-hidden pt-28 pb-24 flex items-center" style={{ background: 'linear-gradient(160deg, #040a1a 0%, #0A2D73 35%, #0756F2 65%, #0a2050 100%)' }}>
         <div className="absolute inset-0">
           <div className="absolute top-20 right-20 h-[500px] w-[500px] rounded-full bg-brand-blue/15 blur-[120px]" />

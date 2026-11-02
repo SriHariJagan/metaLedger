@@ -1,3 +1,4 @@
+import { SEO } from '@/seo/SEO';
 import HeroSection from './home/HeroSection'
 import TrustSection from './home/TrustSection'
 import WorkflowSection from './home/WorkflowSection'
@@ -17,6 +18,7 @@ import CTASection from '@/components/CTASection'
 export default function Home() {
   return (
     <main>
+      <SEO />
       <HeroSection />
       <TrustSection />
       <WorkflowSection />
