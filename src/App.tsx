@@ -3,6 +3,7 @@ import { SEO } from './seo/SEO';
 import { Routes, Route } from 'react-router-dom'
 import Navbar from '@/components/Navbar'
 import { Footer } from '@/components/footer/Footer'
+import { PageScrollbar } from '@/components/common/PageScrollbar'
 import Home from '@/pages/Home'
 import About from '@/pages/About'
 import Solutions from '@/pages/Solutions'
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/sitemap" element={<Sitemap />} />
       </Routes>
       <Footer />
+      <PageScrollbar />
     </div>
   )
 }
